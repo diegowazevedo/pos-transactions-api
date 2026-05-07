@@ -1,0 +1,74 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: pos-api
+    ports:
+      - "3000:3000"
+    env_file:
+      - ../.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mock-api:
+        condition: service_started
+    restart: unless-stopped
+
+  mock-api:
+    build:
+      context: ../mock-api
+      dockerfile: Dockerfile
+    container_name: pos-mock-api
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: "4000"
+      # Tunable knobs para validar o pipeline de resiliência da API principal:
+      # MOCK_LATENCY_MS: "1500"     # injeta latência fixa
+      # MOCK_FAILURE_RATE: "0.3"    # 30% das chamadas falham
+      # MOCK_FAILURE_STATUS: "503"
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: pos-postgres
+    environment:
+      POSTGRES_DB: pos
+      POSTGRES_USER: pos
+      POSTGRES_PASSWORD: pos
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pos -d pos"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: pos-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  jaeger:
+    # All-in-one Jaeger that accepts OTLP/HTTP on :4318 and serves the UI on :16686
+    image: jaegertracing/all-in-one:1.76.0
+    container_name: pos-jaeger
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"   # UI
+      - "4318:4318"     # OTLP HTTP receiver
+
+volumes:
+  pgdata:

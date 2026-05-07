@@ -1,0 +1,57 @@
+# REST Client / IntelliJ HTTP Client examples.
+# Use the `npm run sign` helper to generate fresh X-Signature/X-Timestamp pairs:
+#
+#   npm run sign POST /v1/pos/transactions/authorize \
+#     '{"terminalId":"T1","nsu":"0001","amount":"10.00"}'
+#
+# Then paste the headers below. They expire after HMAC_TIMESTAMP_TOLERANCE_SECONDS (default 300s).
+
+@host = http://localhost:3000
+
+### Health (no auth)
+GET {{host}}/health
+
+### Authorize a new transaction
+POST {{host}}/v1/pos/transactions/authorize
+content-type: application/json
+x-correlation-id: demo-{{$timestamp}}
+x-timestamp: <generate via npm run sign>
+x-signature: <generate via npm run sign>
+
+{
+  "terminalId": "T1",
+  "nsu": "0001",
+  "amount": "10.00",
+  "currency": "BRL"
+}
+
+### Confirm
+POST {{host}}/v1/pos/transactions/confirm
+content-type: application/json
+x-timestamp: <generate via npm run sign>
+x-signature: <generate via npm run sign>
+
+{
+  "transactionId": "01HY..."
+}
+
+### Void by transactionId
+POST {{host}}/v1/pos/transactions/void
+content-type: application/json
+x-timestamp: <generate via npm run sign>
+x-signature: <generate via npm run sign>
+
+{
+  "transactionId": "01HY..."
+}
+
+### Void by (terminalId, nsu)
+POST {{host}}/v1/pos/transactions/void
+content-type: application/json
+x-timestamp: <generate via npm run sign>
+x-signature: <generate via npm run sign>
+
+{
+  "terminalId": "T1",
+  "nsu": "0001"
+}

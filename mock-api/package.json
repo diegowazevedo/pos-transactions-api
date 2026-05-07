@@ -1,0 +1,20 @@
+{
+  "name": "mock-external-api",
+  "version": "0.1.0",
+  "description": "Fastify mock para o upstream consumido pelo external-api do projeto principal",
+  "private": true,
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "start:dev": "ts-node src/server.ts"
+  },
+  "dependencies": {
+    "fastify": "^4.28.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
